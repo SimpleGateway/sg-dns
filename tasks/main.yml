@@ -1,0 +1,64 @@
+---
+- name: Create Unbound control keys
+  command: unbound-control-setup
+  args:
+    creates: /var/unbound/etc/unbound_server.pem
+  notify:
+    - unbound
+
+- name: Configure unbound
+  template:
+    src: unbound.conf
+    dest: /var/unbound/etc/unbound.conf
+    owner: root
+    group: wheel
+    mode: 0644
+  notify:
+    - unbound
+
+- name: Create NSD control keys
+  command: nsd-control-setup
+  args:
+    creates: /var/nsd/etc/nsd_server.pem
+  notify:
+    - nsd
+
+- name: Configure NSD forward zone
+  template:
+    src: nsd.conf
+    dest: /var/nsd/etc/nsd.conf
+    owner: root
+    group: _nsd
+    mode: 0640
+  notify:
+    - nsd
+
+- name: Configure NSD reverse zone
+  template:
+    src: default.zone
+    dest: /var/nsd/zones/{{ domain }}
+    owner: root
+    group: wheel
+    mode: 0644
+  notify:
+    - nsd
+
+- name: Configure NSD reverse zone
+  template:
+    src: default.rDNS
+    dest: /var/nsd/zones/{{ gw_network | regex_replace('^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$','\\3.\\2.\\1')}}.in-addr.arpa
+    owner: root
+    group: wheel
+    mode: 0644
+  notify:
+    - nsd
+
+- name: Enable DNS services
+  copy:
+    src: 10-dns
+    dest: /etc/rc.conf.local.d/10-dns
+    owner: root
+    group: wheel
+    mode: 0644
+  notify:
+    - rc.conf.local
