@@ -1,23 +1,23 @@
 $TTL 10m
 
-@ IN SOA {{ hostname }}.{{ domain }}. netAdmin.{{ domain }}. (
-  {{ dns_SOA }}
+@ IN SOA {{ sg_common_hostname }}.{{ sg_common_domain }}. netAdmin.{{ sg_common_domain }}. (
+  {{ sg_dns_SOA }}
 	1h	;refresh
 	3m	;retry
 	2w	;expire
 	1h )	;negative cache
 
-	IN NS {{ hostname}}.{{ domain }}.
-        IN A  {{ domain_address | default(dhcp_self) }}
+	IN NS {{ sg_common_hostname}}.{{ sg_common_domain }}.
+        IN A  {{ sg_common_domain_address | default(sg_common_int_ip) }}
 
-{{ hostname }} IN A {{ dhcp_self }}
+{{ sg_common_hostname }} IN A {{ sg_common_int_ip }}
 
-{% if staticHosts is defined %}
-{% for service in staticHosts %}
-{{ staticHosts[service].name }} IN A {{ staticHosts[service].addr }}
-{% if staticHosts[service].CNAME is defined %}
-{% for cname in staticHosts[service].CNAME %}
-{{ cname }} IN CNAME {{ staticHosts[service].name }}
+{% if sg_common_staticHosts is defined %}
+{% for service in sg_common_staticHosts %}
+{{ sg_common_staticHosts[service].name }} IN A {{ sg_common_staticHosts[service].addr }}
+{% if sg_common_staticHosts[service].CNAME is defined %}
+{% for cname in sg_common_staticHosts[service].CNAME %}
+{{ cname }} IN CNAME {{ sg_common_staticHosts[service].name }}
 {% endfor %}
 {% endif %}
 {% endfor %}

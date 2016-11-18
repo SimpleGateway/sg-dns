@@ -1,16 +1,16 @@
 $TTL 10m
 
-@ IN SOA {{ hostname }}.{{ domain }}. netAdmin.{{ domain }}. (
-  {{ dns_SOA }}
+@ IN SOA {{ sg_common_hostname }}.{{ sg_common_domain }}. netAdmin.{{ sg_common_domain }}. (
+  {{ sg_dns_SOA }}
 	1h	;refresh
 	3m	;retry
 	2w	;expire
 	1h )	;negative cache
 
-	IN NS {{ hostname}}.{{ domain }}.
+	IN NS {{ sg_common_hostname}}.{{ sg_common_domain }}.
 
-{% if staticHosts is defined %}
-{% for service in staticHosts %}
-{{ staticHosts[service].addr | regex_replace('^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$','\\4') }} IN PTR {{ staticHosts[service].name }}.{{ domain }}.
+{% if sg_common_staticHosts is defined %}
+{% for service in sg_common_staticHosts %}
+{{ sg_common_staticHosts[service].addr | regex_replace('^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$','\\4') }} IN PTR {{ sg_common_staticHosts[service].name }}.{{ sg_common_domain }}.
 {% endfor %}
 {% endif %}
