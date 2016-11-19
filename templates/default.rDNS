@@ -10,7 +10,7 @@ $TTL 10m
 	IN NS {{ sg_common_hostname}}.{{ sg_common_domain }}.
 
 {% if sg_common_staticHosts is defined %}
-{% for service in sg_common_staticHosts %}
-{{ sg_common_staticHosts[service].addr | regex_replace('^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$','\\4') }} IN PTR {{ sg_common_staticHosts[service].name }}.{{ sg_common_domain }}.
+{% for host in sg_common_staticHosts %}
+{{ host.addr | regex_replace('^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$','\\4') }} IN PTR {{ host.name }}.{{ sg_common_domain }}.
 {% endfor %}
 {% endif %}

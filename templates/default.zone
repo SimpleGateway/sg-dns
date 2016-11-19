@@ -13,11 +13,11 @@ $TTL 10m
 {{ sg_common_hostname }} IN A {{ sg_common_int_ip }}
 
 {% if sg_common_staticHosts is defined %}
-{% for service in sg_common_staticHosts %}
-{{ sg_common_staticHosts[service].name }} IN A {{ sg_common_staticHosts[service].addr }}
-{% if sg_common_staticHosts[service].CNAME is defined %}
-{% for cname in sg_common_staticHosts[service].CNAME %}
-{{ cname }} IN CNAME {{ sg_common_staticHosts[service].name }}
+{% for host in sg_common_staticHosts %}
+{{ host.name }} IN A {{ host.addr }}
+{% if host.CNAME is defined %}
+{% for cname in host.CNAME %}
+{{ cname }} IN CNAME {{ host.name }}
 {% endfor %}
 {% endif %}
 {% endfor %}
