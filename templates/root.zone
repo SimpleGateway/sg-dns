@@ -1,0 +1,36 @@
+$TTL 10m
+
+@ IN SOA {{ sg_globalconf.hostname }}.{{ sg_globalconf.domain }}. netAdmin.{{ sg_globalconf.domain }}. (
+	{{ sg_globalconf.dns.SOA }}
+	1h	;refresh
+	3m	;retry
+	2w	;expire
+	1h )	;negative cache
+
+	IN NS {{ sg_globalconf.hostname }}.{{ sg_globalconf.domain }}.
+{% if sg_globalconf.domain_address is defined %}
+	IN A {{ sg_globalconf.domain_address }}
+{% endif %}
+
+{#Normal dance to get interface options out#}
+{% for interface in sg_network %}
+{% if interface.services is defined %}
+{% if "dns" in interface.services  %}
+{# This file is for hosts that don't belong to any other domain#}
+{% if interface.domain is not defined and interface.hosts is defined %}
+{# Add a DNS record for ourselves #}
+{{ sg_globalconf.hostname }} IN A {{ interface.address }}
+{# Iterate through all the hosts #}
+{% for host in interface.hosts %}
+{{ host.name }} IN A {{ host.addr }}
+{# If host has CNAMEs, add those too #}
+{% if host.CNAME is defined %}
+{% for cname in host.CNAME %}
+{{ cname }} IN CNAME {{ host.name }}
+{% endfor %}
+{% endif %}
+{% endfor %}
+{% endif %}
+{% endif %}
+{% endif %}
+{% endfor %}

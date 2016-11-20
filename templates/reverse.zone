@@ -1,0 +1,23 @@
+$TTL 10m
+
+@ IN SOA {{ sg_globalconf.hostname }}.{{ item.domain | default(sg_globalconf.domain) }}. netAdmin.{{ item.domain | default(sg_globalconf.domain) }}. (
+	{{ sg_globalconf.dns.SOA }}
+	1h	;refresh
+	3m	;retry
+	2w	;expire
+	1h )	;negative cache
+
+	IN NS {{ sg_globalconf.hostname }}.{{ item.domain | default(sg_globalconf.domain) }}.
+
+{% if item.services is defined %}
+{% if "dns" in item.services  %}
+{% if item.hosts is defined %}
+{# Add a PTR record for ourselves #}
+{{ sg_globalconf.hostname }} IN PTR {{ item.address | ipaddr('revdns') }}
+{# Iterate through all the hosts #}
+{% for host in item.hosts %}
+{{ host.name }} IN PTR {{ host.addr | ipaddr('revdns') }}
+{% endfor %}
+{% endif %}
+{% endif %}
+{% endif %}
