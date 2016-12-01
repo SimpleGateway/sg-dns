@@ -13,10 +13,10 @@ $TTL 10m
 {% if "dns" in item.services  %}
 {% if item.hosts is defined %}
 {# Add a PTR record for ourselves #}
-{{ sg_globalconf.hostname }} IN PTR {{ item.address | ipaddr('revdns') }}
+{{ item.address | ipaddr('revdns') }} IN PTR {{ sg_globalconf.hostname }}
 {# Iterate through all the hosts #}
 {% for host in item.hosts %}
-{{ host.name }} IN PTR {{ host.addr | ipaddr('revdns') }}
+{{ host.addr | ipaddr('revdns') }} IN PTR {{ host.name }}.{{ item.domain | default(sg_globalconf.domain) }}.
 {% endfor %}
 {% endif %}
 {% endif %}
