@@ -51,6 +51,8 @@
     group: wheel
     mode: 0644
   with_items: "{{ sg_network | sg_interfaces_with_attribute('domain') }}"
+  loop_control:
+    label: "{{ item.domain }}"
   notify:
     - nsd
 
@@ -62,6 +64,8 @@
     group: wheel
     mode: 0644
   with_items: "{{ sg_network | sg_interfaces_with_attribute('hosts') }}"
+  loop_control:
+    label: "{{ item.cidr }}"
   notify:
     - nsd
 
