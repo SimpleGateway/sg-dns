@@ -8,7 +8,7 @@
 
 - name: Configure unbound
   template:
-    src: unbound.conf
+    src: unbound.conf.j2
     dest: /var/unbound/etc/unbound.conf
     owner: root
     group: wheel
@@ -25,7 +25,7 @@
 
 - name: Configure NSD
   template:
-    src: nsd.conf
+    src: nsd.conf.j2
     dest: /var/nsd/etc/nsd.conf
     owner: root
     group: _nsd
@@ -35,7 +35,7 @@
 
 - name: Configure root Forward Zone
   template:
-    src: root.zone
+    src: root.zone.j2
     dest: /var/nsd/zones/{{ sg_globalconf.domain }}
     owner: root
     group: wheel
@@ -45,7 +45,7 @@
 
 - name: Configure Auxiliary Forward Zones
   template:
-    src: forward.zone
+    src: forward.zone.j2
     dest: /var/nsd/zones/{{ item.domain }}
     owner: root
     group: wheel
@@ -58,7 +58,7 @@
 
 - name: Configure NSD reverse zone
   template:
-    src: reverse.zone
+    src: reverse.zone.j2
     dest: /var/nsd/zones/{{ item.arpa }}
     owner: root
     group: wheel
