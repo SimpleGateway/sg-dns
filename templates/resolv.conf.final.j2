@@ -1,0 +1,5 @@
+domain {{ sg_globalconf.domain }}
+lookup file bind
+{% for item in sg_network if 'dns' in item.services %}
+nameserver {{ item.address }}
+{% endfor %}

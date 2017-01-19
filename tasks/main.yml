@@ -78,3 +78,11 @@
     mode: 0644
   notify:
     - rc.conf.local
+
+- name: Configure the resolver
+  template:
+    src: resolv.conf.final.j2
+    dest: /etc/resolv.conf.final
+    owner: root
+    group: wheel
+    mode: 0644
