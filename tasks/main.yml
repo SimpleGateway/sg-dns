@@ -50,7 +50,7 @@
     owner: root
     group: wheel
     mode: 0644
-  with_items: "{{ sg_network | sg_interfaces_with_attribute('domain') }}"
+  with_items: "{{ sg_network|selectattr('domain', 'defined')|list }}"
   loop_control:
     label: "{{ item.domain }}"
   notify:
@@ -63,7 +63,7 @@
     owner: root
     group: wheel
     mode: 0644
-  with_items: "{{ sg_network | sg_interfaces_with_attribute('hosts') }}"
+  with_items: "{{ sg_network|selectattr('hosts', 'defined')|list }}"
   loop_control:
     label: "{{ item.cidr }}"
   notify:
