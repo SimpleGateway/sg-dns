@@ -1,29 +1,38 @@
 $TTL 10m
 
-@ IN SOA {{ sg_globalconf.hostname }}.{{ item.domain }}. netAdmin.{{ item.domain }}. (
+@ IN SOA {{ item.serviceconf.dns.authname }}. {{ item.serviceconf.dns.adminmail }}. (
 	{{ sg_globalconf.dns.SOA }}
 	1h	;refresh
 	3m	;retry
 	2w	;expire
 	1h )	;negative cache
 
-	IN NS {{ sg_globalconf.hostname }}.{{ item.domain }}.
+{% for server in item.serviceconf.dns.nameservers|default([sg_globalconf.hostname]) %}
+	IN NS	{{ server }}.
+{% endfor %}
+{% if item.serviceconf.dns.domain_address is defined %}
+	IN A	{{ item.serviceconf.dns.domain_address }}
+{% endif %}
 
-{% if item.services is defined %}
-{% if "dns" in item.services  %}
 {% if item.domain is defined and item.hosts is defined %}
-{# Add a DNS record for ourselves #}
-{{ sg_globalconf.hostname }} IN A {{ item.address }}
 {# Iterate through all the hosts #}
 {% for host in item.hosts %}
-{{ host.name }} IN A {{ host.addr }}
-{# If host has CNAMEs, add those too #}
-{% if host.CNAME is defined %}
-{% for cname in host.CNAME %}
-{{ cname }} IN CNAME {{ host.name }}
+{{ host.name }}	IN A	{{ host.addr }}
+{% if host.dns is defined %}
+{# Some hosts have multiple A records #}
+{% if host.dns.A is defined %}
+{% for a in host.dns.A %}
+{{ a }}	IN A {{ host.addr }}
 {% endfor %}
 {% endif %}
+{# Some hosts have CNAME records as well #}
+{% if host.dns.CNAME is defined %}
+{% for cname in host.dns.CNAME %}
+{{ cname }}	IN CNAME	{{ host.name }}
 {% endfor %}
 {% endif %}
+{# This newline makes the file way more readable #}
+
 {% endif %}
+{% endfor %}
 {% endif %}

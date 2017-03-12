@@ -1,72 +1,85 @@
+#jinja2: trim_blocks: "true", lstrip_blocks: "true"
 server:
-{% for interface in sg_network %}
-{% if interface.services is defined %}
-{% if "dns" in interface.services %}
-	interface: {{ interface.address }}
-	access-control: {{ interface.cidr }} allow
-{% endif %}
-{% endif %}
+        access-control: 0.0.0.0/0 deny
+
+{% for net in sg_networks %}
+        {% if net.services is defined  and "dns" in net.services %}
+                {# This gets the interface that this net is attached to #}
+                {% set interface = sg_interfaces|selectattr('name', 'equalto', net.attach_to)|first %}
+        interface: {{ interface.address | ipaddr('address') }}
+                 {% if interface.aliases is defined %}
+                        {% for alias in interface.aliases %}
+        interface: {{ alias | ipaddr('address') }}
+                        {% endfor %}
+                 {% endif %}
+                 {% set net_mask = interface.address|ipaddr('network')+"/"+interface.address|ipaddr('netmask') %}
+                 {% set cidr = net_mask|ipaddr('net') %}
+        access-control: {{ cidr }} allow
+                 {% if interface.aliases is defined %}
+                        {% for alias in interface.aliases %}
+                                {% set net_mask = alias|ipaddr('network')+"/"+alias|ipaddr('netmask') %}
+                                {% set cidr = net_mask|ipaddr('net') %}
+        access-control: {{ cidr }} allow
+                        {% endfor %}
+                 {% endif %}
+        {% endif %}
+
 {% endfor %}
-	access-control: 127.0.0.0/8 allow
-	do-ip6: no
+        access-control: 127.0.0.0/8 allow
+        do-ip6: no
 
-	logfile: ""
-	log-time-ascii: yes
+        logfile: ""
+        log-time-ascii: yes
 
-	hide-identity: yes
-	hide-version: yes
-	harden-below-nxdomain: no
-	harden-referral-path: yes
-	use-caps-for-id: no
-	ignore-cd-flag: yes
+        hide-identity: yes
+        hide-version: yes
+        harden-below-nxdomain: no
+        harden-referral-path: yes
+        use-caps-for-id: no
+        ignore-cd-flag: yes
 
-	# Allow queries to nsd on localhost
-	do-not-query-localhost: no
+        # Allow queries to nsd on localhost
+        do-not-query-localhost: no
 
-	# Enforce privacy of these addresses.
-	private-address: 10.0.0.0/8
-	private-address: 172.16.0.0/12
-	private-address: 192.168.0.0/16
-	private-address: 169.254.0.0/16
+        # Enforce privacy of these addresses.
+        private-address: 10.0.0.0/8
+        private-address: 172.16.0.0/12
+        private-address: 192.168.0.0/16
+        private-address: 169.254.0.0/16
 
-	val-log-level: 2
+        val-log-level: 2
 
-	# Allow {{ sg_globalconf.domain }} to have private addresses
-	private-domain: "{{ sg_globalconf.domain }}"
-
-{% for interface in sg_network %}
-{% if interface.services is defined %}
-{% if "dns" in interface.services %}
-{% if interface.domain is defined and interface.hosts is defined %}
-{# If the interface domain is defined, permit private addresses for it #}
+{% for net in sg_networks %}
+{% if net.services is defined %}
+{% if "dns" in net.services %}
+{% if net.domain is defined and net.hosts is defined %}
+{# If the net domain is defined, permit private addresses for it #}
 {# Only do this though if there are hosts to put in it #}
-	# Allow {{ interface.domain }} to have private addresses
-	private-domain: "{{ interface.domain }}."
+        # Allow {{ net.domain }} to have private addresses
+        private-domain: "{{ net.domain }}."
 {% endif %}
 {% endif %}
 {% endif %}
 {% endfor %}
 
-
-{% for interface in sg_network %}
-{% if interface.services is defined %}
-{% if "dns" in interface.services %}
-{% if interface.hosts is defined %}
-{# All interfaces with hosts need a reverse zone #}
+{% for net in sg_networks %}
+{% if net.services is defined %}
+{% if "dns" in net.services %}
+{% if net.hosts is defined %}
+{# All nets with hosts need a reverse zone #}
 {# Only do this though if there are hosts to put in it #}
-	local-zone: "{{ interface.arpa }}." nodefault
+        local-zone: "{{ net.arpa }}." nodefault
 {% endif %}
 {% endif %}
+
 {% endif %}
 {% endfor %}
-
-
-{% if sg_globalconf.dns.stubzones is defined %}
+{% if sg_globalconf.dns is defined and sg_globalconf.dns.stubzones is defined %}
 {% for zone in sg_globalconf.dns.stubzones %}
 {% if zone.private %}
-	# Allow {{ zone.name }} to have private addresses
-	private-domain: "{{ zone.name }}."
-	local-zone: "{{ zone.arpa }}." nodefault
+        # Allow {{ zone.name }} to have private addresses
+        private-domain: "{{ zone.name }}."
+        local-zone: "{{ zone.arpa }}." nodefault
 
 {% endif %}
 {% endfor %}
@@ -74,61 +87,65 @@ server:
 
 # Permit remote control of this server (restarts/reloads)
 remote-control:
-	control-enable: yes
+        control-enable: yes
 
-{% if sg_globalconf.dns.stubzones is defined %}
+{% if sg_globalconf.dns is defined and sg_globalconf.dns.stubzones is defined %}
 #==============================================================================
 # Handle Stub Zones for other domains with specific servers
 #==============================================================================
 {% for zone in sg_globalconf.dns.stubzones %}
 # Stub zone for {{ zone.name }}
 stub-zone:
-	name: "{{ zone.name }}"
+        name: "{{ zone.name }}"
 {% for address in zone.addresses %}
-	stub-addr: {{ address }}
+        stub-addr: {{ address }}
 {% endfor %}
-	stub-first: yes
+        stub-first: yes
 
 stub-zone:
-	name: "{{ zone.arpa }}"
+        name: "{{ zone.arpa }}"
 {% for address in zone.addresses %}
-	stub-addr: {{ address }}
+        stub-addr: {{ address }}
 {% endfor %}
-	stub-first: yes
+        stub-first: yes
 
 {% endfor %}
 {% endif %}
 
-stub-zone:
-	name: "{{ sg_globalconf.domain }}"
-	stub-addr: 127.0.0.1
-	stub-first: yes
-
-{% for interface in sg_network %}
-{% if interface.services is defined %}
-{% if "dns" in interface.services %}
-{% if interface.domain is defined and interface.hosts is defined %}
+{% for net in sg_networks %}
+{% if net.services is defined %}
+{% if "dns" in net.services %}
+{% if net.domain is defined and net.hosts is defined %}
 {# Reference the stub zone for the domains #}
 {# Only do this though if there are hosts to put in it #}
 stub-zone:
-	name: "{{ interface.domain }}"
-	stub-addr: 127.0.0.1
-	stub-first: yes
+        name: "{{ net.domain }}"
+        stub-addr: 127.0.0.1
+        {% if net.serviceconf.dns is defined and net.serviceconf.dns.stub_first is defined %}
+        stub-first: {{ net.serviceconf.dns.stub_first | default(False) | ternary('yes', 'no') }}
+        {% else %}
+        stub-first: no
+        {% endif %}
+
 {% endif %}
 {% endif %}
 {% endif %}
 {% endfor %}
-
-{% for interface in sg_network %}
-{% if interface.services is defined %}
-{% if "dns" in interface.services %}
-{% if interface.hosts is defined %}
-{# All interfaces with hosts need a reverse zone #}
+{% for net in sg_networks %}
+{% if net.services is defined %}
+{% if "dns" in net.services %}
+{% if net.hosts is defined %}
+{# All nets with hosts need a reverse zone #}
 {# Only do this though if there are hosts to put in it #}
 stub-zone:
-	name: "{{ interface.arpa }}"
-	stub-addr: 127.0.0.1
-	stub-first: yes
+        name: "{{ net.arpa }}"
+        stub-addr: 127.0.0.1
+        {% if net.serviceconf.dns is defined and net.serviceconf.dns.stub_first is defined %}
+        stub-first: {{ net.serviceconf.dns.stub_first | default(False) | ternary('yes', 'no') }}
+        {% else %}
+        stub-first: no
+        {% endif %}
+
 {% endif %}
 {% endif %}
 {% endif %}

@@ -6,22 +6,18 @@ server:
 remote-control:
 	control-enable: yes
 
+{% for net in sg_networks %}
+{% if net.services is defined %}
+{% if "dns" in net.services %}
+{% if net.domain is defined and net.hosts is defined %}
 zone:
-	name: "{{ sg_globalconf.domain }}"
-	zonefile: "{{ sg_globalconf.domain }}"
-
-{% for interface in sg_network %}
-{% if interface.services is defined %}
-{% if "dns" in interface.services %}
-{% if interface.domain is defined and interface.hosts is defined %}
-zone:
-	name: "{{ interface.domain }}"
-	zonefile: "{{ interface.domain }}"
+	name: "{{ net.domain }}"
+	zonefile: "{{ net.domain }}"
 {% endif %}
-{% if interface.hosts is defined %}
+{% if net.hosts is defined %}
 zone:
-	name: "{{ interface.arpa }}"
-	zonefile: "{{ interface.arpa }}"
+	name: "{{ net.arpa }}"
+	zonefile: "{{ net.arpa }}"
 {% endif %}
 {% endif %}
 {% endif %}

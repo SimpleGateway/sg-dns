@@ -33,24 +33,14 @@
   notify:
     - nsd
 
-- name: Configure root Forward Zone
-  template:
-    src: root.zone.j2
-    dest: /var/nsd/zones/{{ sg_globalconf.domain }}
-    owner: root
-    group: wheel
-    mode: 0644
-  notify:
-    - nsd
-
-- name: Configure Auxiliary Forward Zones
+- name: Configure Forward Zones
   template:
     src: forward.zone.j2
     dest: /var/nsd/zones/{{ item.domain }}
     owner: root
     group: wheel
     mode: 0644
-  with_items: "{{ sg_network|selectattr('domain', 'defined')|list }}"
+  with_items: "{{ sg_networks|selectattr('domain', 'defined')|list }}"
   loop_control:
     label: "{{ item.domain }}"
   notify:
@@ -63,9 +53,9 @@
     owner: root
     group: wheel
     mode: 0644
-  with_items: "{{ sg_network|selectattr('hosts', 'defined')|list }}"
+  with_items: "{{ sg_networks|selectattr('hosts', 'defined')|list }}"
   loop_control:
-    label: "{{ item.cidr }}"
+    label: "Reverse for {{ item.domain }}"
   notify:
     - nsd
 
@@ -78,11 +68,3 @@
     mode: 0644
   notify:
     - rc.conf.local
-
-- name: Configure the resolver
-  template:
-    src: resolv.conf.final.j2
-    dest: /etc/resolv.conf.final
-    owner: root
-    group: wheel
-    mode: 0644

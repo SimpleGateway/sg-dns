@@ -1,5 +1,5 @@
 - name: nsd
-  command: /etc/rc.d/nsd reload
+  command: /etc/rc.d/nsd restart
 
 - name: unbound
-  command: /etc/rc.d/unbound reload
+  command: /etc/rc.d/unbound restart

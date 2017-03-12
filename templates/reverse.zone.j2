@@ -1,23 +1,24 @@
+#jinja2: trim_blocks: "true", lstrip_blocks: "true"
 $TTL 10m
 
-@ IN SOA {{ sg_globalconf.hostname }}.{{ item.domain | default(sg_globalconf.domain) }}. netAdmin.{{ item.domain | default(sg_globalconf.domain) }}. (
+@ IN SOA {{ item.serviceconf.dns.authname|default(sg_globalconf.hostname) }}. {{ item.serviceconf.dns.adminmail }}. (
 	{{ sg_globalconf.dns.SOA }}
 	1h	;refresh
 	3m	;retry
 	2w	;expire
 	1h )	;negative cache
 
-	IN NS {{ sg_globalconf.hostname }}.{{ item.domain | default(sg_globalconf.domain) }}.
+{% for server in item.serviceconf.dns.nameservers | default([sg_globalconf.hostname]) %}
+	IN NS	{{ server }}.
+{% endfor %}
 
 {% if item.services is defined %}
-{% if "dns" in item.services  %}
-{% if item.hosts is defined %}
-{# Add a PTR record for ourselves #}
-{{ item.address | ipaddr('revdns') }} IN PTR {{ sg_globalconf.hostname }}
-{# Iterate through all the hosts #}
-{% for host in item.hosts %}
-{{ host.addr | ipaddr('revdns') }} IN PTR {{ host.name }}.{{ item.domain | default(sg_globalconf.domain) }}.
-{% endfor %}
-{% endif %}
-{% endif %}
+        {% if "dns" in item.services  %}
+                {% if item.hosts is defined %}
+                        {# Iterate through all the hosts #}
+                                {% for host in item.hosts %}
+{{ host.addr | ipaddr('revdns') }} IN PTR {{ host.name }}.{{ item.domain | default("example.com") }}.
+                                {% endfor %}
+                {% endif %}
+        {% endif %}
 {% endif %}
