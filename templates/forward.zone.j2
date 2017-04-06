@@ -1,6 +1,6 @@
 $TTL 10m
 
-@ IN SOA {{ item.serviceconf.dns.authname }}. {{ item.serviceconf.dns.adminmail }}. (
+@ IN SOA {{ item.serviceconf.dns.authname|default(sg_globalconf.hostname) }}. {{ item.serviceconf.dns.adminmail }}. (
 	{{ sg_globalconf.dns.SOA }}
 	1h	;refresh
 	3m	;retry
